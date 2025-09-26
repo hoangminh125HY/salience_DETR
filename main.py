@@ -23,7 +23,7 @@ from util.utils import HighestCheckpoint, load_checkpoint, load_state_dict
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a detector")
-    parser.add_argument("--config-file", default="configs/train_config.py")
+    parser.add_argument("--config-file", default="/kaggle/working/salience_DETR/configs/train_config.py")
     parser.add_argument(
         "--mixed-precision",
         type=str,
