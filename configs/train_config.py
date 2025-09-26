@@ -13,7 +13,7 @@ print_freq = 50   # frequency to print logs
 starting_epoch = 0
 max_norm = 0.1    # clip gradient norm
 
-output_dir = None  # path to save checkpoints, default for None: checkpoints/{model_name}
+output_dir = "/kaggle/working/outputs"
 find_unused_parameters = False  # useful for debugging distributed training
 
 # define dataset for train
