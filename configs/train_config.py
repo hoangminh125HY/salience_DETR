@@ -17,31 +17,33 @@ output_dir = "/kaggle/working/outputs"
 find_unused_parameters = False  # useful for debugging distributed training
 
 # define dataset for train
-coco_path = "/kaggle/input/ppever2/PPE_v2zip"  # /PATH/TO/YOUR/COCODIR
+coco_path = "/kaggle/input/ppever2/PPE_v2zip"
 train_transform = presets.detr  # see transforms/presets to choose a transform
 train_dataset = CocoDetection(
-    img_folder="/kaggle/input/ppever2/PPE_v2zip/train",
-    ann_file="/kaggle/input/ppever2/PPE_v2zip/annotations/train_annotations.coco.json",
+    img_folder=f"{coco_path}/train",
+    ann_file=f"{coco_path}/annotations/train_annotations.coco.json",
     transforms=train_transform,
     train=True,
 )
 test_dataset = CocoDetection(
-    img_folder="/kaggle/input/ppever2/PPE_v2zip/valid",
-    ann_file="/kaggle/input/ppever2/PPE_v2zip/annotations/val_annotations.coco.json",
+    img_folder=f"{coco_path}/valid",
+    ann_file=f"{coco_path}/annotations/val_annotations.coco.json",
     transforms=None,  # the eval_transform is integrated in the model
 )
 
 # model config to train
 model_path = "/kaggle/working/salience_DETR/configs/salience_detr/salience_detr_resnet50_800_1333.py"
 
-# specify a checkpoint folder to resume, or a pretrained ".pth" to finetune, for example:
-# checkpoints/salience_detr_resnet50_800_1333/train/2024-03-22-09_38_50
-# checkpoints/salience_detr_resnet50_800_1333/train/2024-03-22-09_38_50/best_ap.pth
+# specify a checkpoint folder to resume, or a pretrained ".pth" to finetune
 resume_from_checkpoint = None  
 
 learning_rate = 1e-4  # initial learning rate
-optimizer = optim.AdamW(lr=learning_rate, weight_decay=1e-4, betas=(0.9, 0.999))
-lr_scheduler = optim.lr_scheduler.MultiStepLR(milestones=[10], gamma=0.1)
 
 # This define parameter groups with different learning rate
 param_dicts = param_dict.finetune_backbone_and_linear_projection(lr=learning_rate)
+
+# Optimizer (must include param_dicts)
+optimizer = optim.AdamW(param_dicts, lr=learning_rate, weight_decay=1e-4, betas=(0.9, 0.999))
+
+# LR Scheduler (must include optimizer)
+lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10], gamma=0.1)
