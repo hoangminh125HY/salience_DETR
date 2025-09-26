@@ -1,9 +1,15 @@
 from torch import optim
 
-from datasets.coco import CocoDetection
+#from datasets.coco import CocoDetection
 from transforms import presets
 from optimizer import param_dict
+import importlib.util
 
+spec = importlib.util.spec_from_file_location("datasets.coco", "/content/salience_DETR/datasets/coco.py")
+coco = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(coco)
+
+CocoDetection = coco.CocoDetection
 # Commonly changed training configurations
 num_epochs = 12   # train epochs
 batch_size = 2    # total_batch_size = #GPU x batch_size
@@ -17,24 +23,24 @@ output_dir = "/content/output" # path to save checkpoints, default for None: che
 find_unused_parameters = False  # useful for debugging distributed training
 
 # define dataset for train
-coco_path = "/content/ppe123/PPE_v2zip"  # /PATH/TO/YOUR/COCODIR
+coco_path = "/content/salience_DETR/ppe_123456789"  # /PATH/TO/YOUR/COCODIR
 train_transform = presets.detr  # see transforms/presets to choose a transform
 # define dataset for train
 train_dataset = CocoDetection(
-    img_folder="/content/ppe123/PPE_v2zip/train",
-    ann_file="/content/ppe123/PPE_v2zip/annotations/train_annotations.coco.json",
-    transforms=presets.detr,  # giữ nguyên transform
+    img_folder="/content/salience_DETR/ppe_123456789/train",
+    ann_file="/content/salience_DETR/ppe_123456789/annotations/train_annotations.coco.json",
+    transforms=presets.detr,
     train=True,
 )
 
 test_dataset = CocoDetection(
-    img_folder="/content/ppe123/PPE_v2zip/valid",
-    ann_file="/content/ppe123/PPE_v2zip/annotations/val_annotations.coco.json",
-    transforms=None,  # eval_transform tích hợp sẵn trong model
+    img_folder="/content/salience_DETR/ppe_123456789/valid",
+    ann_file="/content/salience_DETR/ppe_123456789/annotations/val_annotations.coco.json",
+    transforms=None,
 )
 
 # model config to train
-model_path = "content/salience_DETR/configs/salience_detr/salience_detr_resnet50_800_1333.py"
+model_path = "/content/salience_DETR/configs/salience_detr/salience_detr_resnet50_800_1333.py"
 
 # specify a checkpoint folder to resume, or a pretrained ".pth" to finetune, for example:
 # checkpoints/salience_detr_resnet50_800_1333/train/2024-03-22-09_38_50
