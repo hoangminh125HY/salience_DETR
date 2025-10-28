@@ -19,23 +19,23 @@ print_freq = 50   # frequency to print logs
 starting_epoch = 0
 max_norm = 0.1    # clip gradient norm
 
-output_dir = "/content/output" # path to save checkpoints, default for None: checkpoints/{model_name}
+output_dir = "/kaggle/working/checkpoints" # path to save checkpoints, default for None: checkpoints/{model_name}
 find_unused_parameters = False  # useful for debugging distributed training
 
 # define dataset for train
-coco_path = "/content/salience_DETR/ppe_123456789"  # /PATH/TO/YOUR/COCODIR
+coco_path = "/kaggle/input/rat-dark-dts"  # /PATH/TO/YOUR/COCODIR
 train_transform = presets.detr  # see transforms/presets to choose a transform
 # define dataset for train
 train_dataset = CocoDetection(
-    img_folder="/content/salience_DETR/ppe_123456789/train",
-    ann_file="/content/salience_DETR/ppe_123456789/annotations/train_annotations.coco.json",
+    img_folder="/kaggle/input/rat-dark-dts/rat-dark/train/img",
+    ann_file="/kaggle/input/rat-dark-dts/rat-dark/train/anno/_annotations.coco.json",
     transforms=presets.detr,
     train=True,
 )
 
 test_dataset = CocoDetection(
-    img_folder="/content/salience_DETR/ppe_123456789/valid",
-    ann_file="/content/salience_DETR/ppe_123456789/annotations/val_annotations.coco.json",
+    img_folder="/kaggle/input/rat-dark-dts/rat-dark/valid/img",
+    ann_file="/kaggle/input/rat-dark-dts/rat-dark/valid/anno/_annotations.coco.json",
     transforms=None,
 )
 
