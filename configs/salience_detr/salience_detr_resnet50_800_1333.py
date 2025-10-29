@@ -20,7 +20,7 @@ from models.necks.repnet import RepVGGPluXNetwork
 
 # mostly changed parameters
 embed_dim = 256
-num_classes = 5
+num_classes = 1
 num_queries = 900
 num_feature_levels = 4
 transformer_enc_layers = 6
