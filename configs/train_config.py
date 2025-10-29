@@ -5,7 +5,7 @@ from transforms import presets
 from optimizer import param_dict
 import importlib.util
 
-spec = importlib.util.spec_from_file_location("datasets.coco", "/content/salience_DETR/datasets/coco.py")
+spec = importlib.util.spec_from_file_location("datasets.coco", "/kaggle/working/salience_DETR/datasets/coco.py")
 coco = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(coco)
 
