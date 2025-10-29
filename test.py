@@ -6,7 +6,8 @@ import logging
 import os
 import tempfile
 from typing import Dict
-
+import sys, os
+sys.path.append('/kaggle/working/salience_DETR')
 import accelerate
 import torch
 from accelerate import Accelerator
