@@ -23,6 +23,8 @@ from util.logger import setup_logger
 from util.misc import fixed_generator, seed_worker
 from util.utils import load_checkpoint, load_state_dict
 from util.visualize import visualize_coco_bounding_boxes
+import sys, os
+sys.path.append('/kaggle/working/salience_DETR')
 
 
 def parse_args():
@@ -89,8 +91,8 @@ def test_on_dataset():
 
     # get dataset
     dataset = CocoDetection(
-        img_folder=f"{args.coco_path}/{args.subset}2017",
-        ann_file=f"{args.coco_path}/annotations/instances_{args.subset}2017.json",
+        img_folder=f"/kaggle/input/dtssss/SalienceDetr_HA/test/img",
+        ann_file=f"/kaggle/input/dtssss/SalienceDetr_HA/test/annotations/annotations_output.json",
         transforms=None,  # the eval_transform is integrated in the model
         train=args.subset == "train",
     )
