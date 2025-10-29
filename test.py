@@ -1,13 +1,14 @@
+import sys, os
+sys.path.insert(0, "/kaggle/working/salience_DETR")
+
 import argparse
 import contextlib
 import io
 import json
 import logging
-import os
 import tempfile
 from typing import Dict
-import sys, os
-sys.path.append('/kaggle/working/salience_DETR')
+
 import accelerate
 import torch
 from accelerate import Accelerator
@@ -24,8 +25,6 @@ from util.logger import setup_logger
 from util.misc import fixed_generator, seed_worker
 from util.utils import load_checkpoint, load_state_dict
 from util.visualize import visualize_coco_bounding_boxes
-import sys, os
-sys.path.insert(0, "/kaggle/working/salience_DETR")
 
 
 def parse_args():
