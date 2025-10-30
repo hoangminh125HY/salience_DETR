@@ -94,7 +94,7 @@ def test_on_dataset():
     # get dataset
     dataset = CocoDetection(
         img_folder=f"/kaggle/input/rat-dark-dts/rat-dark/test/img",
-        ann_file=f"/kaggle/input/rat-dark-dts/rat-dark/test/anno/_annotations.coco.json",
+        ann_file=f"/kaggle/working/_annotations_test_fixed.coco.json",
         transforms=None,  # the eval_transform is integrated in the model
         train=args.subset == "train",
     )
@@ -129,7 +129,7 @@ def test_on_dataset():
 
     # get evaluation results from json file
     if args.model_config is None or args.show_dir and accelerator.is_main_process:
-        coco_gt = COCO(f"{args.coco_path}/anno/_annotations.coco.json")
+        coco_gt = COCO(f"/kaggle/working/_annotations_test_fixed.coco.json")
 
     # if not given model, evaluate COCO metric on predicted json results
     if args.model_config is None and accelerator.is_main_process:
