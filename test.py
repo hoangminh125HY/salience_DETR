@@ -93,8 +93,8 @@ def test_on_dataset():
 
     # get dataset
     dataset = CocoDetection(
-        img_folder=f"/kaggle/input/dtssss/SalienceDetr_HA/test/img",
-        ann_file=f"/kaggle/input/dtssss/SalienceDetr_HA/test/annotations/annotations_output.json",
+        img_folder=f"/kaggle/input/rat-dark-dts/rat-dark/test/img",
+        ann_file=f"/kaggle/input/rat-dark-dts/rat-dark/test/anno/_annotations.coco.json",
         transforms=None,  # the eval_transform is integrated in the model
         train=args.subset == "train",
     )
