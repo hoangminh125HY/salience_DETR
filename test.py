@@ -129,7 +129,7 @@ def test_on_dataset():
 
     # get evaluation results from json file
     if args.model_config is None or args.show_dir and accelerator.is_main_process:
-        coco_gt = COCO(f"/kaggle/working/_annotations_test_fixed.coco.json")
+        dataset.coco = COCO(f"/kaggle/working/_annotations_test_fixed.coco.json")
 
     # if not given model, evaluate COCO metric on predicted json results
     if args.model_config is None and accelerator.is_main_process:
