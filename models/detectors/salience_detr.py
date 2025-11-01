@@ -129,7 +129,7 @@ class SalienceDETR(DNDETRDetector):
         postprocessor: nn.Module,
         focus_criterion: nn.Module,
         # model parameters
-        num_classes: int = 2,
+        num_classes: int = 4,
         num_queries: int = 900,
         denoising_nums: int = 100,
         # model variants
