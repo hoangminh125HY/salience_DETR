@@ -20,7 +20,7 @@ from models.necks.repnet import RepVGGPluXNetwork
 
 # mostly changed parameters
 embed_dim = 256
-num_classes = 3
+num_classes = 4
 num_queries = 900
 num_feature_levels = 4
 transformer_enc_layers = 6
@@ -32,7 +32,7 @@ dim_feedforward = 2048
 position_embedding = PositionEmbeddingSine(embed_dim // 2, temperature=10000, normalize=True, offset=-0.5)
 
 backbone = ResNetBackbone(
-    "resnet18", norm_layer=FrozenBatchNorm2d, return_indices=(1, 2, 3), freeze_indices=(0,)
+    "resnet50", norm_layer=FrozenBatchNorm2d, return_indices=(1, 2, 3), freeze_indices=(0,)
 )
 
 neck = ChannelMapper(
