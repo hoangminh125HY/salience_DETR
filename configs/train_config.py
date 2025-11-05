@@ -23,19 +23,19 @@ output_dir = "/kaggle/working/checkpoints" # path to save checkpoints, default f
 find_unused_parameters = False  # useful for debugging distributed training
 
 # define dataset for train
-coco_path = "/kaggle/input/ratdts1/MD.v1i.coco"  # /PATH/TO/YOUR/COCODIR
+coco_path = "/kaggle/input/ratdts/MD.v1i.coco"  # /PATH/TO/YOUR/COCODIR
 train_transform = presets.detr  # see transforms/presets to choose a transform
 # define dataset for train
 train_dataset = CocoDetection(
-    img_folder="/kaggle/input/ratdts1/MD.v1i.coco/train/img",
-    ann_file="/kaggle/input/ratdts1/MD.v1i.coco/train/_annotations.coco.json",
+    img_folder="/kaggle/input/ratdts/MD.v1i.coco/train/img",
+    ann_file="/kaggle/input/ratdts/MD.v1i.coco/train/_annotations.coco.json",
     transforms=presets.detr,
     train=True,
 )
 
 test_dataset = CocoDetection(
-    img_folder="/kaggle/input/ratdts1/MD.v1i.coco/valid/img",
-    ann_file="/kaggle/input/ratdts1/MD.v1i.coco/valid/_annotations.coco.json",
+    img_folder="/kaggle/input/ratdts/MD.v1i.coco/valid/img",
+    ann_file="/kaggle/input/ratdts/MD.v1i.coco/valid/_annotations.coco.json",
     transforms=None,
 )
 
@@ -45,7 +45,7 @@ model_path = "/kaggle/working/salience_DETR/configs/salience_detr/salience_detr_
 # specify a checkpoint folder to resume, or a pretrained ".pth" to finetune, for example:
 # checkpoints/salience_detr_resnet50_800_1333/train/2024-03-22-09_38_50
 # checkpoints/salience_detr_resnet50_800_1333/train/2024-03-22-09_38_50/best_ap.pth
-resume_from_checkpoint = None  
+resume_from_checkpoint = "/kaggle/input/checkpoints-43/checkpoints_43"
 
 learning_rate = 1e-4  # initial learning rate
 optimizer = optim.AdamW(lr=learning_rate, weight_decay=1e-4, betas=(0.9, 0.999))
