@@ -10,8 +10,9 @@ coco = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(coco)
 
 CocoDetection = coco.CocoDetection
-# Commonly cha  # train epochs
-batch_size = 50    # total_batch_size = #GPU x batch_size
+# Commonly changed training configurations
+num_epochs = 50  # train epochs
+batch_size = 4    # total_batch_size = #GPU x batch_size
 num_workers = 4   # workers for pytorch DataLoader
 pin_memory = True # whether pin_memory for pytorch DataLoader
 print_freq = 50   # frequency to print logs
