@@ -28,14 +28,14 @@ train_transform = presets.detr  # see transforms/presets to choose a transform
 # define dataset for train
 train_dataset = CocoDetection(
     img_folder="/kaggle/input/uavdts1/UAV.v3i.coco/train/img",
-    ann_file="/kaggle/input/uavdts1/UAV.v3i.coco/train/_annotations.coco.json",
+    ann_file="/kaggle/working/fix_annotations_train.coco.json",
     transforms=presets.detr,
     train=True,
 )
 
 test_dataset = CocoDetection(
     img_folder="/kaggle/input/uavdts1/UAV.v3i.coco/valid/img",
-    ann_file="/kaggle/input/uavdts1/UAV.v3i.coco/valid/_annotations.coco 18.21.23.json",
+    ann_file="/kaggle/working/fix_annotations_valid.coco.json",
     transforms=None,
 )
 
