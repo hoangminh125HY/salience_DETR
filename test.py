@@ -93,7 +93,7 @@ def test_on_dataset():
 
     # get dataset
     dataset = CocoDetection(
-        img_folder=f"/kaggle/input/dtsuav/UAV.v1i.coco/test/img",
+        img_folder=f"/kaggle/input/dts-3-uav/UAV.v3i.coco/test/img",
         ann_file=f"/kaggle/working/fix_annotations_test.coco.json",
         transforms=None,  # the eval_transform is integrated in the model
         train=args.subset == "train",
