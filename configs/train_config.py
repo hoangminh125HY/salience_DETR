@@ -44,7 +44,7 @@ model_path = "/kaggle/working/salience_DETR/configs/salience_detr/salience_detr_
 # specify a checkpoint folder to resume, or a pretrained ".pth" to finetune, for example:
 # checkpoints/salience_detr_resnet50_800_1333/train/2024-03-22-09_38_50
 # checkpoints/salience_detr_resnet50_800_1333/train/2024-03-22-09_38_50/best_ap.pth
-resume_from_checkpoint = "/kaggle/input/ckp42-rs50-uav-2711/ckp42_rs50_uav_42"
+resume_from_checkpoint = "/kaggle/input/ckp42-rs50-uav/ckp42_rs50_uav_42"
 
 learning_rate = 1e-4  # initial learning rate
 optimizer = optim.AdamW(lr=learning_rate, weight_decay=1e-4, betas=(0.9, 0.999))
