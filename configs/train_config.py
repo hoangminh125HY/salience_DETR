@@ -38,7 +38,6 @@ test_dataset = CocoDetection(
     ann_file="/kaggle/working/fix_annotations_valid.coco.json",
     transforms=None,
 )
-
 # model config to train
 model_path = "/kaggle/working/salience_DETR/configs/salience_detr/salience_detr_resnet50_800_1333.py"
 
