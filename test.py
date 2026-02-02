@@ -93,8 +93,8 @@ def test_on_dataset():
 
     # get dataset
     dataset = CocoDetection(
-        img_folder=f"/kaggle/input/moderate-heavy-rain-dts/Moderate_heavy_rain/test/img",
-        ann_file=f"/kaggle/input/moderate-heavy-rain-dts/Moderate_heavy_rain/test/anno/_annotations.coco 14.41.56.json",
+        img_folder=f"/kaggle/input/uav-dts/UAV.v3i.coco/test/img",
+        ann_file=f"/kaggle/input/uav-dts/UAV.v3i.coco/test/_annotations.coco 18.12.49.json",
         transforms=None,  # the eval_transform is integrated in the model
         train=args.subset == "train",
     )
@@ -129,7 +129,7 @@ def test_on_dataset():
 
     # get evaluation results from json file
     if args.model_config is None or args.show_dir and accelerator.is_main_process:
-        coco_dt = COCO(f"/kaggle/input/moderate-heavy-rain-dts/Moderate_heavy_rain/test/anno/_annotations.coco 14.41.56.json")
+        coco_dt = COCO(f"/kaggle/input/uav-dts/UAV.v3i.coco/test/_annotations.coco 18.12.49.json")
 
     # if not given model, evaluate COCO metric on predicted json results
     if args.model_config is None and accelerator.is_main_process:
