@@ -129,22 +129,26 @@ def inference():
 
 
 def _visualize_batch_for_infer(
-    batch: Tuple[Dict],
-    classes: List[str],
-    show_conf: float = 0.0,
-    show_dir: str = None,
-    font_scale: float = 1.0,
-    box_thick: int = 3,
-    fill_alpha: float = 0.2,
-    text_box_color: Tuple[int] = (255, 255, 255),
-    text_font_color: Tuple[int] = None,
-    text_alpha: float = 0.5,
-    **kwargs,  # Not useful
+    batch,
+    classes,
+    show_conf=0.0,
+    show_dir=None,
+    font_scale=1.0,
+    box_thick=3,
+    fill_alpha=0.2,
+    text_box_color=(255, 255, 255),
+    text_font_color=None,
+    text_alpha=0.5,
+    **kwargs,
 ):
-    image_name, image, output = batch[0].values()
-    # plot bounding boxes on image
+    item = batch[0]
+    image_name = item["image_name"]
+    image = item["image"]
+    output = item["output"]
+
     image = image.numpy().transpose(1, 2, 0)
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
     image = plot_bounding_boxes_on_image_cv2(
         image=image,
         boxes=output["boxes"],
@@ -159,7 +163,9 @@ def _visualize_batch_for_infer(
         text_font_color=text_font_color,
         text_alpha=text_alpha,
     )
-    cv2.imwrite(os.path.join(show_dir, os.path.basename(image_name)), image)
+
+    save_path = os.path.join(show_dir, os.path.basename(image_name))
+    cv2.imwrite(save_path, image)
 
 
 if __name__ == "__main__":
