@@ -172,7 +172,13 @@ def _visualize_batch_for_infer(
         text_alpha=text_alpha,
     )
 
-    save_path = os.path.join(show_dir, os.path.basename(image_name))
+    base = os.path.basename(image_name)
+
+# nếu mất đuôi thì thêm lại
+    if not base.lower().endswith((".jpg", ".png", ".jpeg")):
+        base = base + ".jpg"
+
+    save_path = os.path.join(show_dir, base)
     cv2.imwrite(save_path, image)
 
 
