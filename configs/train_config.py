@@ -23,19 +23,19 @@ output_dir = "/kaggle/working/checkpoints" # path to save checkpoints, default f
 find_unused_parameters = False  # useful for debugging distributed training
 
 # define dataset for train
-coco_path = "/kaggle/input/uav-dts/UAV.v3i.coco"  # /PATH/TO/YOUR/COCODIR
+coco_path = "/kaggle/working/salience_DETR/UAV-4"  # /PATH/TO/YOUR/COCODIR
 train_transform = presets.detr  # see transforms/presets to choose a transform
 # define dataset for train
 train_dataset = CocoDetection(
-    img_folder="/kaggle/input/uav-dts/UAV.v3i.coco/train/img",
-    ann_file="/kaggle/input/uav-dts/UAV.v3i.coco/train/_annotations.coco.json",
+    img_folder="/kaggle/working/salience_DETR/UAV-4/train",
+    ann_file="/kaggle/working/salience_DETR/UAV-4/train/_annotations.coco.json",
     transforms=presets.detr,
     train=True,
 )
 
 test_dataset = CocoDetection(
-    img_folder="/kaggle/input/uav-dts/UAV.v3i.coco/valid/img",
-    ann_file="/kaggle/input/uav-dts/UAV.v3i.coco/valid/_annotations.coco 18.21.23.json",
+    img_folder="/kaggle/working/salience_DETR/UAV-4/valid",
+    ann_file="/kaggle/working/salience_DETR/UAV-4/valid/_annotations.coco 18.21.23.json",
     transforms=None,
 )
 # model config to train
