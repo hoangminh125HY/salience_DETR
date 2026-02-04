@@ -119,11 +119,11 @@ def inference():
     # save visualization results
     if args.show_dir:
         os.makedirs(args.show_dir, exist_ok=True)
-
+        classes  = ['UAV', 'kite'] 
         for item in tqdm(predictions):
             _visualize_batch_for_infer(
                 batch=[item],
-                classes=model.CLASSES,
+                classes=classes,
                 show_conf=args.show_conf,
                 show_dir=args.show_dir,
                 font_scale=args.font_scale,
@@ -156,11 +156,12 @@ def _visualize_batch_for_infer(
 
     image = image.numpy().transpose(1, 2, 0)
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    labels = torch.zeros_like(output["labels"])  # 👈 ép về class 0
 
     image = plot_bounding_boxes_on_image_cv2(
         image=image,
         boxes=output["boxes"],
-        labels=output["labels"],
+        labels=labels,
         scores=output.get("scores", None),
         classes=classes,
         show_conf=show_conf,
