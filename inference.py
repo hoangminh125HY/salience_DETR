@@ -107,13 +107,6 @@ def inference():
         predictions = []
         for index, images in enumerate(tqdm(data_loader)):
             prediction = model(images)[0]
-            labels = prediction["labels"]
-
-            # model label: 0,1
-            # convert -> coco label: 1,2
-            labels = labels + 1
-
-            prediction["labels"] = labels
 
             # change torch.Tensor to CPU
             for key in prediction:
@@ -126,49 +119,36 @@ def inference():
     # save visualization results
     if args.show_dir:
         os.makedirs(args.show_dir, exist_ok=True)
-        classes  = ['UAV', 'kite'] 
-        for item in tqdm(predictions):
-            _visualize_batch_for_infer(
-                batch=[item],
-                classes=classes,
-                show_conf=args.show_conf,
-                show_dir=args.show_dir,
-                font_scale=args.font_scale,
-                box_thick=args.box_thick,
-                fill_alpha=args.fill_alpha,
-                text_box_color=args.text_box_color,
-                text_font_color=args.text_font_color,
-                text_alpha=args.text_alpha,
-            )
 
+        # create a dummy dataset for visualization with multi-workers
+        data_loader = create_test_data_loader(
+            predictions, accelerator=accelerator, batch_size=1, num_workers=args.workers
+        )
+        data_loader.collate_fn = partial(_visualize_batch_for_infer, classes=model.CLASSES, **vars(args))
+        [None for _ in tqdm(data_loader)]
 
 
 def _visualize_batch_for_infer(
-    batch,
-    classes,
-    show_conf=0.0,
-    show_dir=None,
-    font_scale=1.0,
-    box_thick=3,
-    fill_alpha=0.2,
-    text_box_color=(255, 255, 255),
-    text_font_color=None,
-    text_alpha=0.5,
-    **kwargs,
+    batch: Tuple[Dict],
+    classes: List[str],
+    show_conf: float = 0.0,
+    show_dir: str = None,
+    font_scale: float = 1.0,
+    box_thick: int = 3,
+    fill_alpha: float = 0.2,
+    text_box_color: Tuple[int] = (255, 255, 255),
+    text_font_color: Tuple[int] = None,
+    text_alpha: float = 0.5,
+    **kwargs,  # Not useful
 ):
-    item = batch[0]
-    image_name = item["image_name"]
-    image = item["image"]
-    output = item["output"]
-
+    image_name, image, output = batch[0].values()
+    # plot bounding boxes on image
     image = image.numpy().transpose(1, 2, 0)
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    labels = torch.zeros_like(output["labels"])  # 👈 ép về class 0
-
     image = plot_bounding_boxes_on_image_cv2(
         image=image,
         boxes=output["boxes"],
-        labels=labels,
+        labels=output["labels"],
         scores=output.get("scores", None),
         classes=classes,
         show_conf=show_conf,
@@ -179,9 +159,7 @@ def _visualize_batch_for_infer(
         text_font_color=text_font_color,
         text_alpha=text_alpha,
     )
-
-    save_path = os.path.join(show_dir, os.path.basename(image_name))
-    cv2.imwrite(save_path, image)
+    cv2.imwrite(os.path.join(show_dir, os.path.basename(image_name)), image)
 
 
 if __name__ == "__main__":
