@@ -120,12 +120,20 @@ def inference():
     if args.show_dir:
         os.makedirs(args.show_dir, exist_ok=True)
 
-        # create a dummy dataset for visualization with multi-workers
-        data_loader = create_test_data_loader(
-            predictions, accelerator=accelerator, batch_size=1, num_workers=args.workers
-        )
-        data_loader.collate_fn = partial(_visualize_batch_for_infer, classes=model.CLASSES, **vars(args))
-        [None for _ in tqdm(data_loader)]
+        for item in tqdm(predictions):
+            _visualize_batch_for_infer(
+                batch=[item],
+                classes=model.CLASSES,
+                show_conf=args.show_conf,
+                show_dir=args.show_dir,
+                font_scale=args.font_scale,
+                box_thick=args.box_thick,
+                fill_alpha=args.fill_alpha,
+                text_box_color=args.text_box_color,
+                text_font_color=args.text_font_color,
+                text_alpha=args.text_alpha,
+            )
+
 
 
 def _visualize_batch_for_infer(
