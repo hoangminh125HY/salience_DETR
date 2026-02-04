@@ -1,118 +1,180 @@
-import os
 import argparse
+import os
+from functools import partial
+from test import create_test_data_loader
+from typing import Dict, List, Tuple
+
+import accelerate
 import cv2
-import torch
 import numpy as np
+import torch
+import torch.utils.data as data
+from accelerate import Accelerator
 from PIL import Image
 from tqdm import tqdm
-from torchvision.ops import nms
 
 from util.lazy_load import Config
+from util.logger import setup_logger
 from util.utils import load_checkpoint, load_state_dict
 from util.visualize import plot_bounding_boxes_on_image_cv2
 
 
-# =========================
-# Utils
-# =========================
-def is_image(path):
+def is_image(file_path):
     try:
-        Image.open(path).close()
+        img = Image.open(file_path)
+        img.close()
         return True
     except:
         return False
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Inference a detector")
+
+    # dataset parameters
     parser.add_argument("--image-dir", type=str, required=True)
+    parser.add_argument("--workers", type=int, default=2)
+
+    # model parameters
     parser.add_argument("--model-config", type=str, required=True)
     parser.add_argument("--checkpoint", type=str, required=True)
-    parser.add_argument("--show-dir", type=str, required=True)
-    parser.add_argument("--conf-thres", type=float, default=0.3)
-    parser.add_argument("--nms-thres", type=float, default=0.5)
-    return parser.parse_args()
+
+    # visualization parameters
+    parser.add_argument("--show-dir", type=str, default=None)
+    parser.add_argument("--show-conf", type=float, default=0.5)
+
+    # plot parameters
+    parser.add_argument("--font-scale", type=float, default=1.0)
+    parser.add_argument("--box-thick", type=int, default=1)
+    parser.add_argument("--fill-alpha", type=float, default=0.2)
+    parser.add_argument("--text-box-color", type=int, nargs="+", default=(255, 255, 255))
+    parser.add_argument("--text-font-color", type=int, nargs="+", default=None)
+    parser.add_argument("--text-alpha", type=float, default=1.0)
+
+    # engine parameters
+    parser.add_argument("--seed", type=int, default=42)
+
+    args = parser.parse_args()
+    return args
 
 
-# =========================
-# Main
-# =========================
-@torch.no_grad()
-def main():
+class InferenceDataset(data.Dataset):
+    def __init__(self, root):
+        self.images = [os.path.join(root, img) for img in os.listdir(root)]
+        self.images = [img for img in self.images if is_image(img)]
+        assert len(self.images) > 0, "No images found"
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, index):
+        cv2.setNumThreads(0)
+        cv2.ocl.setUseOpenCL(False)
+        image = cv2.imdecode(np.fromfile(self.images[index], dtype=np.uint8), -1)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).transpose(2, 0, 1)
+        return torch.tensor(image)
+
+
+def inference():
     args = parse_args()
-    os.makedirs(args.show_dir, exist_ok=True)
 
-    # 👉 TỰ KHAI BÁO CLASS (quan trọng)
-    classes = ["UAV"]   # sửa nếu dataset bạn nhiều class
+    # set fixed seed and deterministic_algorithms
+    accelerator = Accelerator()
+    accelerate.utils.set_seed(args.seed, device_specific=False)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+    # deterministic in low version pytorch leads to RuntimeError
+    # torch.use_deterministic_algorithms(True, warn_only=True)
 
-    # Load model
-    model = Config(args.model_config).model.eval().cuda()
-    ckpt = load_checkpoint(args.checkpoint)
-    if "model" in ckpt:
-        ckpt = ckpt["model"]
-    load_state_dict(model, ckpt)
+    # setup logger
+    for logger_name in ["py.warnings", "accelerate", os.path.basename(os.getcwd())]:
+        setup_logger(distributed_rank=accelerator.local_process_index, name=logger_name)
 
-    # Load images
-    image_paths = [
-        os.path.join(args.image_dir, f)
-        for f in os.listdir(args.image_dir)
-        if is_image(os.path.join(args.image_dir, f))
-    ]
+    dataset = InferenceDataset(args.image_dir)
+    data_loader = create_test_data_loader(
+        dataset, accelerator=accelerator, batch_size=1, num_workers=args.workers
+    )
 
-    for img_path in tqdm(image_paths):
-        img = cv2.imdecode(
-            np.fromfile(img_path, dtype=np.uint8), cv2.IMREAD_COLOR
-        )
-        h, w = img.shape[:2]
+    # get inference results from model output
+    model = Config(args.model_config).model.eval()
+    checkpoint = load_checkpoint(args.checkpoint)
+    if isinstance(checkpoint, Dict) and "model" in checkpoint:
+        checkpoint = checkpoint["model"]
+    load_state_dict(model, checkpoint)
+    model = accelerator.prepare_model(model)
 
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img_tensor = torch.from_numpy(img_rgb).permute(2, 0, 1).float().cuda()
-        img_tensor = img_tensor.unsqueeze(0)
+    with torch.inference_mode():
+        predictions = []
+        for index, images in enumerate(tqdm(data_loader)):
+            prediction = model(images)[0]
 
-        output = model(img_tensor)[0]
+            # change torch.Tensor to CPU
+            for key in prediction:
+                prediction[key] = prediction[key].to("cpu", non_blocking=True)
+            image_name = data_loader.dataset.images[index]
+            image = images[0].to("cpu", non_blocking=True)
+            prediction = {"image_name": image_name, "image": image, "output": prediction}
+            predictions.append(prediction)
 
-        boxes = output["boxes"]
-        scores = output["scores"]
-        labels = output["labels"]
+    # save visualization results
+    if args.show_dir:
+        os.makedirs(args.show_dir, exist_ok=True)
 
-        # =========================
-        # Confidence filter
-        # =========================
-        keep = scores >= args.conf_thres
-        boxes = boxes[keep]
-        scores = scores[keep]
-        labels = labels[keep]
+        for item in tqdm(predictions):
+            _visualize_batch_for_infer(
+                batch=[item],
+                classes=model.CLASSES,
+                show_conf=args.show_conf,
+                show_dir=args.show_dir,
+                font_scale=args.font_scale,
+                box_thick=args.box_thick,
+                fill_alpha=args.fill_alpha,
+                text_box_color=args.text_box_color,
+                text_font_color=args.text_font_color,
+                text_alpha=args.text_alpha,
+            )
 
-        if boxes.numel() == 0:
-            continue
 
-        # =========================
-        # NMS
-        # =========================
-        keep = nms(boxes, scores, args.nms_thres)
-        boxes = boxes[keep]
-        scores = scores[keep]
-        labels = labels[keep]
 
-        # ⚠ FIX crash: ép label về 0 nếu dataset 1 class
-        labels = torch.zeros_like(labels)
+def _visualize_batch_for_infer(
+    batch,
+    classes,
+    show_conf=0.0,
+    show_dir=None,
+    font_scale=1.0,
+    box_thick=3,
+    fill_alpha=0.2,
+    text_box_color=(255, 255, 255),
+    text_font_color=None,
+    text_alpha=0.5,
+    **kwargs,
+):
+    item = batch[0]
+    image_name = item["image_name"]
+    image = item["image"]
+    output = item["output"]
 
-        # =========================
-        # Draw
-        # =========================
-        vis = plot_bounding_boxes_on_image_cv2(
-            image=img,
-            boxes=boxes.cpu(),
-            labels=labels.cpu(),
-            scores=scores.cpu(),
-            classes=classes,
-            show_conf=args.conf_thres,
-            box_thick=2,
-        )
+    image = image.numpy().transpose(1, 2, 0)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-        save_path = os.path.join(args.show_dir, os.path.basename(img_path))
-        cv2.imwrite(save_path, vis)
+    image = plot_bounding_boxes_on_image_cv2(
+        image=image,
+        boxes=output["boxes"],
+        labels=output["labels"],
+        scores=output.get("scores", None),
+        classes=classes,
+        show_conf=show_conf,
+        font_scale=font_scale,
+        box_thick=box_thick,
+        fill_alpha=fill_alpha,
+        text_box_color=text_box_color,
+        text_font_color=text_font_color,
+        text_alpha=text_alpha,
+    )
+
+    save_path = os.path.join(show_dir, os.path.basename(image_name))
+    cv2.imwrite(save_path, image)
 
 
 if __name__ == "__main__":
-    main()
+    inference()
