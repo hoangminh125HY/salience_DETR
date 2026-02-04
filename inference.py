@@ -107,6 +107,13 @@ def inference():
         predictions = []
         for index, images in enumerate(tqdm(data_loader)):
             prediction = model(images)[0]
+            labels = prediction["labels"]
+
+            # model label: 0,1
+            # convert -> coco label: 1,2
+            labels = labels + 1
+
+            prediction["labels"] = labels
 
             # change torch.Tensor to CPU
             for key in prediction:
