@@ -159,7 +159,8 @@ def _visualize_batch_for_infer(
         text_font_color=text_font_color,
         text_alpha=text_alpha,
     )
-    cv2.imwrite(os.path.join(show_dir, os.path.basename(image_name)), image)
+    save_path = os.path.join(args.show_dir, os.path.basename(image_name))
+    cv2.imwrite(save_path, img)
 
 
 if __name__ == "__main__":
