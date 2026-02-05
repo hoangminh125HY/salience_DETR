@@ -66,129 +66,74 @@ def generate_color_palette(n: int, contrast: bool = False):
 
 
 def plot_bounding_boxes_on_image_cv2(
-    image: np.ndarray,
-    boxes: Union[np.ndarray, List[float]],
-    labels: Union[np.ndarray, List[int]],
-    scores: Union[np.ndarray, List[float]] = None,
-    classes: List[str] = None,
-    show_conf: float = 0.5,
-    font_scale: float = 1.0,
-    box_thick: int = 3,
-    fill_alpha: float = 0.2,
-    text_box_color: Tuple[int] = (255, 255, 255),
-    text_font_color: Tuple[int] = None,
-    text_alpha: float = 0.5,
+    image,
+    boxes,
+    labels,
+    scores=None,
+    classes=None,
+    show_conf=0.3,
+    font_scale=0.5,
+    box_thick=1,
+    **kwargs
 ):
-    """Given an image, plot bounding boxes, labels on it.
 
-    :param image: input image with dtype uint8, format RGB and shape (h, w, c)
-    :param boxes: boxes with format (x1, y1, x2, y2) and shape (n, 4)
-    :param labels: label index with dtype int and shape (n,)
-    :param scores: confidence score with shape (n,), defaults to None
-    :param classes: a list containing all classes, label i will be converted
-         to classes[i] to show if given, else #i will be plotted, defaults to None
-    :param font_scale: scale factor to set font size, defaults to 1.0
-    :param box_thick: scale factor to set box border weight, defaults to 3
-    :param fill_alpha: alpha to filling the area in the bounding box, defaults to 0.2
-    :param text_box_color: background color of the text box, defaults to (255, 255, 255)
-    :param text_font_color: text color, will be set automatically if not given, defaults to None
-    :param text_alpha: alpha to filling the area in the text box, defaults to 0.5
-    """
     if len(labels) == 0:
         return image
 
-    # convert to numpy array if given list as input
     if any(not isinstance(t, np.ndarray) for t in (boxes, labels)):
         boxes, labels = map(np.array, (boxes, labels))
     if scores is not None and not isinstance(scores, np.ndarray):
         scores = np.array(scores)
-    boxes = boxes.astype(np.int32)  # convert to int32, compatible with cv2
 
-    # check input format for boxes, labels, class and scores
-    assert len(boxes) == len(labels), "The number of boxes and labels must be equal"
-    assert boxes.shape[-1] == 4, "Boxes must have 4 elements (x1, y1, x2, y2) and x2 > x1, y2 > y1"
-    assert classes is None or max(labels) <= len(classes) - 1, "#classes less than label index"
-    assert scores is None or len(scores) == len(labels), "#scores and #labels must be equal"
+    boxes = boxes.astype(np.int32)
 
-    # filter low confident predictions
+    # filter confidence
     if scores is not None:
-        boxes, labels, scores = map(lambda x: x[scores > show_conf], (boxes, labels, scores))
+        keep = scores >= show_conf
+        boxes, labels, scores = boxes[keep], labels[keep], scores[keep]
+
+    if classes is None:
+        classes = [str(i) for i in range(max(labels)+1)]
 
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-    # get classes if not given
-    if classes is None:
-        classes = [str(i) for i in range(max(labels) + 1)]
+    # ===== COLOR MAP (EDIT HERE) =====
+    CLASS_COLOR = {
+        "uav":  (0, 0, 255),   # đỏ
+        "kite": (255, 0, 255), # hồng giống hình mẫu
+    }
 
-    # generate color palette
-    colors, light_colors, dark_colors = generate_color_palette(len(classes), contrast=True)
-    colors, light_colors, dark_colors = map(lambda x: x.tolist(), (colors, light_colors, dark_colors))
+    for i, box in enumerate(boxes):
 
-    # map colors and labels to each bounding box
-    colors, light_colors, dark_colors = map(
-        lambda x: [x[i] for i in labels], (colors, light_colors, dark_colors)
-    )
-    labels = [classes[i] for i in labels]
+        cls_name = classes[labels[i]].lower()
+        color = CLASS_COLOR.get(cls_name, (0,255,0))
 
-    # draw bounding boxes filling
-    original_image = copy.deepcopy(image)
-    image = copy.deepcopy(image)
-    for box, color in zip(boxes, colors):
-        cv2.rectangle(image, (box[0], box[1]), (box[2], box[3]), color=color, thickness=-1)
-    image = cv2.addWeighted(original_image, 1 - fill_alpha, image, fill_alpha, 0)
+        x1, y1, x2, y2 = box
 
-    # draw label
-    original_image = copy.deepcopy(image)
-    for i, (color, label, box) in enumerate(zip(colors, labels, boxes)):
-        # get label text
+        # draw rectangle
+        cv2.rectangle(image, (x1, y1), (x2, y2), color, box_thick)
+
+        # label text
         if scores is not None:
-            label = f"{label}, {scores[i]:.3f}"
-
-        # calculate box region and baseline height
-        label_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, int(2 * font_scale))
-        label_size, baseline_height = [int(n) for n in label_size[0]], label_size[1]
-
-        # draw text box
-        box_left = box[0]
-        box_top = box[1] - label_size[1] - baseline_height - 3  # text_box is at the top of box
-        box_right = box[0] + label_size[0]
-        box_bottom = box[1] - 3
-        cv2.rectangle(image, (box_left, box_top), (box_right, box_bottom), color=text_box_color, thickness=-1)
-
-        # draw text label
-        font_color = text_font_color if text_font_color is not None else color
-        left, top = box_left, box[1] - baseline_height
-        label_size = int(2 * font_scale**1.5)
-        cv2.putText(image, label, (left, top), cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_color, label_size)
-    image = cv2.addWeighted(original_image, 1 - text_alpha, image, text_alpha, 0)
-
-    # draw bounding boxes with corner line
-    for dark_color, light_color, box in zip(dark_colors, light_colors, boxes):
-        # draw bounding boxes border
-        cv2.rectangle(image, (box[0], box[1]), (box[2], box[3]), color=dark_color, thickness=box_thick)
-
-        # calculate corner line length
-        if box[2] - box[0] <= 20 or box[3] - box[1] <= 20:
-            length = 1
+            text = f"{cls_name} {scores[i]:.2f}"
         else:
-            length = int(min(box[2] - box[0], box[3] - box[1]) * 0.2)
+            text = cls_name
 
-        corner_color = light_color
-        # top left
-        cv2.line(image, (box[0], box[1]), (box[0] + length, box[1]), corner_color, thickness=box_thick)
-        cv2.line(image, (box[0], box[1]), (box[0], box[1] + length), corner_color, thickness=box_thick)
-        # top right
-        cv2.line(image, (box[2], box[1]), (box[2] - length, box[1]), corner_color, thickness=box_thick)
-        cv2.line(image, (box[2], box[1]), (box[2], box[1] + length), corner_color, thickness=box_thick)
-        # bottom left
-        cv2.line(image, (box[0], box[3]), (box[0] + length, box[3]), corner_color, thickness=box_thick)
-        cv2.line(image, (box[0], box[3]), (box[0], box[3] - length), corner_color, thickness=box_thick)
-        # bottom right
-        cv2.line(image, (box[2], box[3]), (box[2] - length, box[3]), corner_color, thickness=box_thick)
-        cv2.line(image, (box[2], box[3]), (box[2], box[3] - length), corner_color, thickness=box_thick)
+        # put text (no background)
+        cv2.putText(
+            image,
+            text,
+            (x1, y1 - 4),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            font_scale,
+            color,
+            1,
+            cv2.LINE_AA
+        )
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return image
+
 
 
 def visualize_coco_bounding_boxes(
