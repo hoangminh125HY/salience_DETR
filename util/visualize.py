@@ -121,14 +121,39 @@ def plot_bounding_boxes_on_image_cv2(
         classes = [str(i) for i in range(max(labels) + 1)]
 
     # generate color palette
-    colors, light_colors, dark_colors = generate_color_palette(len(classes), contrast=True)
-    colors, light_colors, dark_colors = map(lambda x: x.tolist(), (colors, light_colors, dark_colors))
+    # ===== FIXED COLOR PER CLASS =====
+    CLASS_COLOR = {
+        "uav":  (0, 0, 255),   # đỏ (BGR)
+        "kite": (0, 255, 0),   # xanh
+    }
 
-    # map colors and labels to each bounding box
-    colors, light_colors, dark_colors = map(
-        lambda x: [x[i] for i in labels], (colors, light_colors, dark_colors)
-    )
-    labels = [classes[i] for i in labels]
+    new_colors = []
+    new_light = []
+    new_dark = []
+    new_labels = []
+
+    for i in labels:
+        name = classes[i]
+        new_labels.append(name)
+
+        if name in CLASS_COLOR:
+            base = CLASS_COLOR[name]
+            light = tuple(min(255, c + 120) for c in base)
+            dark  = tuple(max(0, c - 120) for c in base)
+        else:
+            base = (255, 255, 0)
+            light = (255, 255, 150)
+            dark  = (120, 120, 0)
+
+        new_colors.append(base)
+        new_light.append(light)
+        new_dark.append(dark)
+
+    colors = new_colors
+    light_colors = new_light
+    dark_colors = new_dark
+    labels = new_labels
+
 
     # draw bounding boxes filling
     original_image = copy.deepcopy(image)
