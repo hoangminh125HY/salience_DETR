@@ -99,7 +99,7 @@ def plot_bounding_boxes_on_image_cv2(
     # ===== COLOR MAP (EDIT HERE) =====
 # ===== COLOR MAP (BGR) =====
     CLASS_STYLE = {
-        "UAV":  {"box": (139, 0, 0), "txt": (255,255,255)},   # xanh đậm + chữ trắng
+        "UAV":  {"box": (255, 82, 51), "txt": (255,255,255)},   # xanh đậm + chữ trắng
         "kite": {"box": (255, 200, 0), "txt": (0,0,0)},       # xanh nhạt + chữ đen
     }
 
