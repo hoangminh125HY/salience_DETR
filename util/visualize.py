@@ -73,13 +73,17 @@ def plot_bounding_boxes_on_image_cv2(
     classes=None,
     show_conf=0.3,
     font_scale=0.5,
-    box_thick=1,
+    box_thick=2,
     **kwargs
 ):
 
     if len(labels) == 0:
         return image
 
+    import numpy as np
+    import cv2
+
+    # convert numpy
     if any(not isinstance(t, np.ndarray) for t in (boxes, labels)):
         boxes, labels = map(np.array, (boxes, labels))
     if scores is not None and not isinstance(scores, np.ndarray):
@@ -92,44 +96,59 @@ def plot_bounding_boxes_on_image_cv2(
         keep = scores >= show_conf
         boxes, labels, scores = boxes[keep], labels[keep], scores[keep]
 
+    if len(labels) == 0:
+        return image
+
     if classes is None:
         classes = [str(i) for i in range(max(labels)+1)]
 
+    # OpenCV dùng BGR
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-    # ===== COLOR MAP (EDIT HERE) =====
-# ===== COLOR MAP (BGR) =====
+    # ===== COLOR STYLE (BGR) =====
     CLASS_STYLE = {
-        "UAV":  {"box": (255, 82, 51), "txt": (255,255,255)},   # xanh đậm + chữ trắng
-        "kite": {"box": (255, 200, 120), "txt": (0,0,0)},       # xanh nhạt + chữ đen
+        "uav":  {"box": (255, 82, 51),  "txt": (255,255,255)},  # xanh đậm + chữ trắng
+        "kite": {"box": (255,200,120),  "txt": (0,0,0)},        # xanh nhạt + chữ đen
     }
+
+    H, W = image.shape[:2]
 
     for i, box in enumerate(boxes):
 
-        cls_name = classes[labels[i]].lower()
-        style = CLASS_STYLE.get(cls_name, {"box":(0,255,0),"txt":(0,0,0)})
+        cls_id = int(labels[i])          # QUAN TRỌNG
+        cls_text = classes[cls_id]       # hiển thị UAV
+        cls_key  = cls_text.strip().lower()      # map màu
 
+        style = CLASS_STYLE.get(cls_key, {"box":(0,255,0),"txt":(0,0,0)})
         box_color = style["box"]
         txt_color = style["txt"]
 
         x1, y1, x2, y2 = box
 
-        # 1️⃣ draw bounding box
-        cv2.rectangle(image, (x1, y1), (x2, y2), box_color, box_thick)
+        # clamp
+        x1 = max(0, x1); y1 = max(0, y1)
+        x2 = min(W-1, x2); y2 = min(H-1, y2)
 
-        # label text
+        # 1️⃣ Bounding box
+        cv2.rectangle(image, (x1,y1), (x2,y2), box_color, box_thick)
+
+        # text
         if scores is not None:
-            text = f"{cls_name} {scores[i]:.2f}"
+            text = f"{cls_text} {scores[i]:.2f}"
         else:
-            text = cls_name
+            text = cls_text
 
-        # 2️⃣ tính size chữ
+        # text size
         (tw, th), baseline = cv2.getTextSize(
             text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1
         )
 
-        # 3️⃣ vẽ nền label
-        y_text = max(y1 - th - 6, 0)
+        # label position (tránh tràn ảnh)
+        y_text = y1 - th - 6
+        if y_text < 0:
+            y_text = y1 + 3
 
+        # 2️⃣ nền label
         cv2.rectangle(
             image,
             (x1, y_text),
@@ -138,7 +157,7 @@ def plot_bounding_boxes_on_image_cv2(
             -1
         )
 
-        # 4️⃣ vẽ chữ
+        # 3️⃣ chữ
         cv2.putText(
             image,
             text,
@@ -150,8 +169,10 @@ def plot_bounding_boxes_on_image_cv2(
             cv2.LINE_AA
         )
 
-
+    # trả về RGB
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return image
+
 
 
 
