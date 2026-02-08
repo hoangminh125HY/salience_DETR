@@ -107,8 +107,8 @@ def plot_bounding_boxes_on_image_cv2(
 
     # ===== COLOR STYLE (BGR) =====
     CLASS_STYLE = {
-        "uav":  {"box": (255, 82, 51),  "txt": (255,255,255)},  # xanh đậm + chữ trắng
-        "kite": {"box": (255,200,120),  "txt": (0,0,0)},        # xanh nhạt + chữ đen
+        "uav":  {"box": (51,82,255),  "txt": (255,255,255)},  # xanh đậm + chữ trắng
+        "kite": {"box": (120,200,255),  "txt": (0,0,0)},        # xanh nhạt + chữ đen
     }
 
     H, W = image.shape[:2]
