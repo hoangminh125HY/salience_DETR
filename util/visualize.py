@@ -99,8 +99,8 @@ def plot_bounding_boxes_on_image_cv2(
 
     # ===== COLOR MAP (EDIT HERE) =====
     CLASS_COLOR = {
-        "uav":  (139, 0, 0),      # xanh biển đậm
-        "kite": (230, 216, 173),  # xanh nhạt
+        "uav":  (255, 80, 0),     # xanh biển đậm
+        "kite": (255, 200, 100),  # xanh nhạt
     }
 
     for i, box in enumerate(boxes):
