@@ -97,20 +97,24 @@ def plot_bounding_boxes_on_image_cv2(
 
 
     # ===== COLOR MAP (EDIT HERE) =====
-    CLASS_COLOR = {
-        "uav":  (139, 0, 0),     # xanh biển đậm
-        "kite": (255, 200, 0),   # xanh da trời nhạt
+# ===== COLOR MAP (BGR) =====
+    CLASS_STYLE = {
+        "uav":  {"box": (139, 0, 0), "txt": (255,255,255)},   # xanh đậm + chữ trắng
+        "kite": {"box": (255, 200, 0), "txt": (0,0,0)},       # xanh nhạt + chữ đen
     }
 
     for i, box in enumerate(boxes):
 
         cls_name = classes[labels[i]].lower()
-        color = CLASS_COLOR.get(cls_name, (0,255,0))
+        style = CLASS_STYLE.get(cls_name, {"box":(0,255,0),"txt":(0,0,0)})
+
+        box_color = style["box"]
+        txt_color = style["txt"]
 
         x1, y1, x2, y2 = box
 
-        # draw rectangle
-        cv2.rectangle(image, (x1, y1), (x2, y2), color, box_thick)
+        # 1️⃣ draw bounding box
+        cv2.rectangle(image, (x1, y1), (x2, y2), box_color, box_thick)
 
         # label text
         if scores is not None:
@@ -118,17 +122,34 @@ def plot_bounding_boxes_on_image_cv2(
         else:
             text = cls_name
 
-        # put text (no background)
+        # 2️⃣ tính size chữ
+        (tw, th), baseline = cv2.getTextSize(
+            text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1
+        )
+
+        # 3️⃣ vẽ nền label
+        y_text = max(y1 - th - 6, 0)
+
+        cv2.rectangle(
+            image,
+            (x1, y_text),
+            (x1 + tw + 4, y_text + th + 4),
+            box_color,
+            -1
+        )
+
+        # 4️⃣ vẽ chữ
         cv2.putText(
             image,
             text,
-            (x1, y1 - 4),
+            (x1 + 2, y_text + th + 2),
             cv2.FONT_HERSHEY_SIMPLEX,
             font_scale,
-            color,
+            txt_color,
             1,
             cv2.LINE_AA
         )
+
 
     return image
 
